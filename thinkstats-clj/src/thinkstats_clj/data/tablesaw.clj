@@ -1,13 +1,13 @@
 (ns thinkstats-clj.data.tablesaw
   (:require [fastmath.stats :as stats]
-            [fastmath.core :as m])
+            [fastmath.core :as m]
+            [clojure.pprint :as pp])
   (:import [tech.tablesaw.io.csv CsvReadOptions CsvReader]
            [tech.tablesaw.columns Column]
            [tech.tablesaw.api Table Row ShortColumn StringColumn IntColumn LongColumn DoubleColumn FloatColumn NumericColumn CategoricalColumn ColumnType]
            [tech.tablesaw.columns.numbers NumberMapFunctions]
            [java.util Iterator]
-           [clojure.lang Seqable ISeq])
-  (:require [fastmath.stats :as stats]))
+           [clojure.lang Seqable ISeq]))
 
 ;;
 
@@ -79,10 +79,20 @@
   [^CategoricalColumn column]
   (row-iterator (.countByCategory column) count-by-category-selector))
 
+(defn value-counts
+  ([^Column col]
+   (frequencies (seq col)))
+  ([^Table t ^String colname]
+   (value-counts (column t colname))))
+
 (defn shape
   [^Table data]
   {:columns (.columnCount data)
    :rows (.rowCount data)})
+
+(defn size
+  [^Table data]
+  (.rowCount data))
 
 (defmulti summary (fn [d & _] (type d)))
 
@@ -101,7 +111,7 @@
     (dissoc (stats/stats-map col) :Outliers)))
 
 (defn update-column
-  ^Column [column operation pars]
+  ^Column [column operation & pars]
   (.setName ^Column (case operation
                       :log1p (.log1p ^NumberMapFunctions column)
                       :divide (.divide ^NumberMapFunctions column (first pars))
@@ -110,7 +120,12 @@
 (defn update-column!
   ^Table [^Table data col operation & pars]
   (let [^Column c (column data col)] 
-    (.replaceColumn data col (update-column c operation pars))))
+    (.replaceColumn data col (apply update-column c operation pars))))
+
+(defn replace-columns!
+  ^Table [^Table data & cols]
+  (doseq [^Column col cols]
+    (.replaceColumn data (.name col) col)))
 
 ;;
 
@@ -164,6 +179,21 @@
                   (assoc m (second (re-find #"\[(.*)\]" (.name c))) v)
                   m))) {} (.columns mt))))
 
+;;
+
+(defn select-values
+  "Select values using Selector"
+  ([table colname selector] (select-values table colname selector false))
+  ([^Table table colname selector missing?]
+   (let [col (column table colname)
+         data (map #(.get col ^int %) selector)]
+     (if missing?
+       data
+       (remove #(.isMissingValue col %) data)))))
+
+
+;;
+
 (defn string-column
   [name data]
   (StringColumn/create (str name) data))
@@ -195,3 +225,32 @@
 (defn add-columns!
   [^Table table & columns]
   (.addColumns table #^"[Ltech.tablesaw.columns.Column;" (into-array Column columns)))
+
+;;;;
+
+(defprotocol NanProto
+  (nan-value [col]))
+
+(extend-protocol NanProto
+  StringColumn (nan-value [_] "")
+  ShortColumn (nan-value [_] (tech.tablesaw.columns.numbers.ShortColumnType/missingValueIndicator))
+  IntColumn (nan-value [_] (tech.tablesaw.columns.numbers.IntColumnType/missingValueIndicator))
+  LongColumn (nan-value [_] (tech.tablesaw.columns.numbers.LongColumnType/missingValueIndicator))
+  DoubleColumn (nan-value [_] (tech.tablesaw.columns.numbers.DoubleColumnType/missingValueIndicator))
+  FloatColumn (nan-value [_] (tech.tablesaw.columns.numbers.FloatColumnType/missingValueIndicator)))
+
+(defn fmap
+  ([^Table table colname f]
+   (fmap (column table colname) f))
+  ([^Column col f]
+   (let [value-fn (condp = (.type col)
+                    ColumnType/SHORT short
+                    ColumnType/INTEGER int
+                    ColumnType/LONG long
+                    ColumnType/DOUBLE double
+                    ColumnType/FLOAT float
+                    ColumnType/STRING str
+                    identity)]
+     (.map col (reify java.util.function.Function
+                 (apply [t v] (value-fn (f t v))))))))
+

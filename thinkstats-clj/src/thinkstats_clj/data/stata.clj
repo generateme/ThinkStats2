@@ -6,18 +6,20 @@
             [thinkstats-clj.data.tablesaw :as ts])
   (:import [java.util.zip GZIPInputStream ZipInputStream]))
 
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
+
 (def ^:const dict-line-rx #"^\s+_column\((\d+)\)\s+(byte|int|long|float|double|str)[0-9]*\s+(\S+)\s+%([0-9.]+).\s+\"([^\"]+)\"")
 
 (defn type-parser
   "Parse given type. Empty numbers are treated as ##NaN"
   [type]
   (case type
-    ("byte" "int" "long") #(if-not (empty? %)
-                             (Long/parseLong %)
-                             ##NaN)
-    ("float" "double") #(if-not (empty? %)
-                          (Double/parseDouble %)
-                          ##NaN)
+    "byte" #(if-not (empty? %) (Short/parseShort %) Short/MIN_VALUE)
+    "int" #(if-not (empty? %) (Integer/parseInt %) Integer/MIN_VALUE)
+    "long" #(if-not (empty? %) (Long/parseLong %) Long/MIN_VALUE)
+    "float" #(if-not (empty? %) (Float/parseFloat %) ##NaN)
+    "double" #(if-not (empty? %) (Double/parseDouble %) ##NaN)
     identity))
 
 (defn parse-dict-line
@@ -41,7 +43,7 @@
 (defn reader
   "Open path with io/reader; coerce to a GZIPInputStream if suffix is .gz"
   [path]
-  (condp #(.endsWith %2 %1) path
+  (condp #(.endsWith ^String %2 ^String %1) path
     ".gz" (io/reader (GZIPInputStream. (io/input-stream path)))
     ".zip" (io/reader (ZipInputStream. (io/input-stream path)))
     (io/reader path)))
@@ -80,7 +82,7 @@
   ([table-name dct-path data-path]
    (let [dict (read-dict dct-path)
          parser (data-line-parser dict)
-         data (with-open [r (reader data-path)]
+         data (with-open [^java.io.Reader r (reader data-path)]
                 (mapv parser (line-seq r)))]
      (ts/columns->table table-name
                         (doall (map-indexed (fn [id d]

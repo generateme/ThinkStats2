@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [generateme/fastmath "1.3.0-SNAPSHOT"]
-                 [clojure2d.charts "0.0.1-SNAPSHOT"]
+                 [cljplot "0.0.1-SNAPSHOT"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/data.csv "0.1.4"]
                  [tech.tablesaw/tablesaw-core "0.32.6"]
