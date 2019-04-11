@@ -57,7 +57,7 @@
                        (partial rnd/pdf (rnd/distribution :enumerated-int {:data data})) config])))
 
 (defn pmf-int
-  ([data] (pmf data {}))
+  ([data] (pmf-int data {}))
   ([data config]
    (let [config (if (contains? config :domain)
                   config

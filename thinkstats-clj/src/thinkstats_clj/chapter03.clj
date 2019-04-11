@@ -62,9 +62,6 @@
 ;; class sizes
 (def d {7 8, 12 8, 17 14, 22 4, 27 6, 32 12, 37 8, 42 3, 47 2})
 
-(stats/mean d-raw)
-;; => 23.692307692307693
-
 ;; we need to gather raw data from frequencies
 (def d-pmf (rnd/distribution :enumerated-int {:data (mapcat (fn [[k v]] (repeat v k)) d)}))
 
@@ -113,13 +110,13 @@
 ;; => {:columns 2, :rows 4}
 
 (println df)
-;; #object[tech.tablesaw.api.Table 0x583dfa0d                       DF                       
+
 ;;         A           |           B           |
 ;;         -----------------------------------------------
 ;;         0.05361782177063856  |  0.03300586798260763  |
 ;;         0.588401022515685  |  0.06113687619219055  |
 ;;         0.33809777615269954  |   0.9233553560506165  |
-;;         0.06817524190143731  |  0.18856099600248988  |]
+;;         0.06817524190143731  |  0.18856099600248988  |
 
 
 (.columnNames df)
