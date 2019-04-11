@@ -90,6 +90,10 @@
   {:columns (.columnCount data)
    :rows (.rowCount data)})
 
+(defn rows
+  [^Table data rs]
+  (.rows data (int-array rs)))
+
 (defn size
   [^Table data]
   (.rowCount data))

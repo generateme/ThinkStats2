@@ -47,6 +47,8 @@ hist
 (show (histogram-discrete (ts/select-values preg "birthwgt_oz" live-ids)
                           {:xlabel "Birth weight (ounces)" :ylabel "Count"}))
 
+;; from first.py
+(assert (= 9148 (count live-ids)))
 
 (def ages (ts/select-values preg "agepreg" live-ids))
 (show (histogram ages {:percents? false :bins 20 :xlabel "years" :ylabel "Count" :y {:fmt int} :x {:fmt int}}))
@@ -54,7 +56,7 @@ hist
 (show (histogram-discrete ages-int {:xlabel "years" :ylabel "Count"}))
 
 (def pregnancy-length (map #(int (m/floor %)) (ts/select-values preg "prglngth" live-ids)))
-(show (histogram-discrete pregnancy-length {:y {:fmt int} :xlabel "years" :ylabel "Count"}))
+(show (histogram-discrete pregnancy-length {:y {:fmt int} :xlabel "weeks" :ylabel "Count"}))
 
 (take 10 (sort-by first (frequencies ages-int)))
 ;; => ([10 2]
@@ -86,6 +88,10 @@ hist
 (def firsts (set/intersection live-ids (set (.isEqualTo (ts/column preg "birthord") 1.0))))
 (def others (set/intersection live-ids (set (.isNotEqualTo (ts/column preg "birthord") 1.0))))
 
+;; from first.py
+(assert (= 4413 (count firsts)))
+(assert (= 4735 (count others)))
+
 (def pregnancy-length-first (ts/select-values preg "prglngth" firsts))
 (def pregnancy-length-other (ts/select-values preg "prglngth" others))
 
@@ -108,25 +114,13 @@ hist
 (- (stats/mean pregnancy-length-first) (stats/mean pregnancy-length-other))
 ;; => 0.07803726677754952
 
-(defn cohen-effect-size
-  "Computes Cohen's effect size for two groups"
-  [group1 group2]
-  (let [group1 (m/seq->double-array group1)
-        group2 (m/seq->double-array group2)
-        diff (- (stats/mean group1) (stats/mean group2))
-        var1 (stats/variance group1)
-        var2 (stats/variance group2)
-        n1 (alength group1)
-        n2 (alength group2)
-        pooled-var (/ (+ (* n1 var1) (* n2 var2)) (+ n1 n2))]
-    (/ diff (m/sqrt pooled-var))))
-
-(cohen-effect-size pregnancy-length-first pregnancy-length-other)
+(stats/cohens-d pregnancy-length-first pregnancy-length-other)
 ;; => 0.028879044654449862
 
 ;;;;;;
 ;; EXCERCISES
 
+(def weight (ts/select-values preg "totalwgt_lb" live-ids))
 (def weight-first (ts/select-values preg "totalwgt_lb" firsts))
 (def weight-other (ts/select-values preg "totalwgt_lb" others))
 
@@ -136,7 +130,7 @@ hist
 (- (stats/mean weight-first) (stats/mean weight-other))
 ;; => -0.12476118453548768
 
-(cohen-effect-size weight-first weight-other)
+(stats/cohens-d weight-first weight-other)
 ;; => -0.0886723633320275
 
 (def resp (nsfg/fem-resp))
@@ -161,6 +155,47 @@ hist
 (- (stats/mean parities-max-income) (stats/mean parities-other-income))
 ;; => -0.17371374470099554
 
-(cohen-effect-size parities-max-income parities-other-income)
+(stats/cohens-d parities-max-income parities-other-income)
 ;; => -0.12511855314660628
 
+;;; mode
+
+(stats/mode pregnancy-length)
+;; => 39.0
+
+;; are there more modes?
+(stats/modes pregnancy-length)
+;; => (39.0)
+
+;; find number of samples for mode
+((frequencies pregnancy-length) (int (stats/mode pregnancy-length)))
+;; => 4693
+
+
+;; first vs others analysis
+
+(let [mean0 (stats/mean weight)
+      mean1 (stats/mean weight-first)
+      mean2 (stats/mean weight-other)
+      diff (- mean1 mean2)]
+  {:weight-mean mean0
+   :first-babies-mean mean1
+   :other-babies-mean mean2
+   :weight-variance (stats/variance weight)
+   :first-babies-variance (stats/variance weight-first)
+   :other-babies-variance (stats/variance weight-other)
+   :difference-lbs diff
+   :difference-oz (* 16.0 diff)
+   :difference-relative-to-mean-% (* 100.0 (/ diff mean0))
+   :cohens-d (stats/cohens-d weight-first weight-other)})
+
+;; => {:cohens-d -0.0886723633320275,
+;;     :other-babies-variance 1.943781025896453,
+;;     :first-babies-variance 2.018027300915775,
+;;     :difference-lbs -0.12476118453548768,
+;;     :other-babies-mean 7.325855614973261,
+;;     :difference-relative-to-mean-% -1.7171423678372044,
+;;     :first-babies-mean 7.201094430437774,
+;;     :weight-mean 7.26562845762337,
+;;     :weight-variance 1.9832904288326525,
+;;     :difference-oz -1.9961789525678029}

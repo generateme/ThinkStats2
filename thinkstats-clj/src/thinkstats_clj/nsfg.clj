@@ -4,8 +4,10 @@
 
 ;; Create dataset about pregnancy and clean data
 
-(defn fem-resp "Read 2002FemResp dataset." []
+(defn- fem-resp- "Read 2002FemResp dataset." []
   (stata/read-data->dataset "2002FemResp" "../code/2002FemResp.dct" "../code/2002FemResp.dat.gz")) ;; read from Stata file
+
+(def fem-resp (memoize fem-resp-))
 
 (defn- to-nan-fn
   "Return NaN if predicate is true"
@@ -13,7 +15,7 @@
   (fn [col v]
     (if (pred v) (ts/nan-value col) v)))
 
-(defn fem-preg "Read and clean 2002FemPreg dataset." []
+(defn- fem-preg- "Read and clean 2002FemPreg dataset." []
   (let [preg (stata/read-data->dataset "2002FemPreg" "../code/2002FemPreg.dct" "../code/2002FemPreg.dat.gz") ;; read from Stata
         agepreg (ts/update-column (ts/column preg "agepreg") :divide 100.0) ;; divide pregnancy age by 100.0
         birthwgt-lb (ts/fmap preg "birthwgt_lb"  (to-nan-fn #(> % 20))) ;; remove weight greater than 20lb
@@ -30,10 +32,15 @@
     
     preg))
 
+(def fem-preg (memoize fem-preg-))
+
 (defn preg-map
   "Calculate pregancy indices for each case"
-  [preg]
-  (reduce (fn [m [id v]]
-            (if (contains? m v)
-              (update m v conj id)
-              (assoc m v [id]))) {} (map-indexed vector (ts/column preg "caseid"))))
+  ([preg] (preg-map preg nil))
+  ([preg limit]
+   (reduce (fn [m [id v]]
+             (if (and limit (not (limit id)))
+               m
+               (if (contains? m v)
+                 (update m v conj id)
+                 (assoc m v [id])))) {} (map-indexed vector (ts/column preg "caseid")))))
