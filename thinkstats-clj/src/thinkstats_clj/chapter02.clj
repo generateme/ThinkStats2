@@ -58,41 +58,63 @@ hist
 
 (hist 4)
 ;; => nil
+
 (get hist 4 0)
 ;; => 0
 
 (keys hist)
 ;; => (1 2 3 5)
 
-
+;; Show histogram with continuous scale
 (save-and-show (histogram t {:bins 5 :xlabel "value" :ylabel "frequency" :percents? false})
                "ch02/histogram-cont.jpg")
 ;; ![ch02/histogram-cont.jpg](../../charts/ch02/histogram-cont.jpg)
 
-(show (histogram-discrete t {:xlabel "value" :ylabel "frequency"}))
+;; Show barchar versions
+(save-and-show (histogram-discrete t {:xlabel "value" :ylabel "frequency"})
+               "ch02/histogram-bars.jpg")
+;; ![ch02/histogram-bars.jpg](../../charts/ch02/histogram-bars.jpg)
 
-;;
+;; ### Data visualizations
 
+;; Let's load pregnancy database and select ids which represent live birhts.
 (def preg (nsfg/fem-preg))
 (def live-ids (set (.isEqualTo (ts/column preg "outcome") 1.0)))
 
-(show (histogram-discrete (ts/select-values preg "birthwgt_lb" live-ids)
-                          {:xlabel "Birth weight (pounds)" :ylabel "Count"}))
-
-(show (histogram-discrete (ts/select-values preg "birthwgt_oz" live-ids)
-                          {:xlabel "Birth weight (ounces)" :ylabel "Count"}))
-
-;; from first.py
+;; Verify number of live births (from first.py)
 (assert (= 9148 (count live-ids)))
 
+;; `ts/select-values` is function which takes given selector (list of ids) and returns corresponding data from given column. Show lbs first
+(save-and-show (histogram-discrete (ts/select-values preg "birthwgt_lb" live-ids)
+                                   {:xlabel "Birth weight (pounds)" :ylabel "Count"})
+               "ch02/histogram-birthwgt-lb.jpg")
+;; ![ch02/histogram-birthwgt-lb.jpg](../../charts/ch02/histogram-birthwgt-lb.jpg)
+
+;; and oz values
+(save-and-show (histogram-discrete (ts/select-values preg "birthwgt_oz" live-ids)
+                                   {:xlabel "Birth weight (ounces)" :ylabel "Count"})
+               "ch02/histogram-birthwgt-oz.jpg")
+;; ![ch02/histogram-birthwgt-oz.jpg](../../charts/ch02/histogram-birthwgt-oz.jpg)
+
+;; Age of respondent during pregnancy (continuous x-axis)
 (def ages (ts/select-values preg "agepreg" live-ids))
-(show (histogram ages {:percents? false :bins 20 :xlabel "years" :ylabel "Count" :y {:fmt int} :x {:fmt int}}))
+(save-and-show (histogram ages {:percents? false :bins 20 :xlabel "years" :ylabel "Count" :y {:fmt int} :x {:fmt int}})
+               "ch02/histogram-agepreg.jpg")
+;; ![ch02/histogram-agepreg.jpg](../../charts/ch02/histogram-agepreg.jpg)
+
+;; discrete version
 (def ages-int (map #(int (m/floor %)) ages))
-(show (histogram-discrete ages-int {:xlabel "years" :ylabel "Count"}))
+(save-and-show (histogram-discrete ages-int {:xlabel "years" :ylabel "Count"})
+               "ch02/histogram-agepreg-bars.jpg")
+;; ![ch02/histogram-agepreg-bars.jpg](../../charts/ch02/histogram-agepreg-bars.jpg)
 
+;; Select length of pregnancy
 (def pregnancy-length (map #(int (m/floor %)) (ts/select-values preg "prglngth" live-ids)))
-(show (histogram-discrete pregnancy-length {:y {:fmt int} :xlabel "weeks" :ylabel "Count"}))
+(save-and-show (histogram-discrete pregnancy-length {:y {:fmt int} :xlabel "weeks" :ylabel "Count"})
+               "ch02/histogram-prglngth.jpg")
+;; ![ch02/histogram-prglngth.jpg](../../charts/ch02/histogram-prglngth.jpg)
 
+;; shortest pregnancy lengths
 (take 10 (sort-by first (frequencies ages-int)))
 ;; => ([10 2]
 ;;     [11 1]
@@ -118,20 +140,23 @@ hist
 ;;     [48 7]
 ;;     [50 2])
 
-;;
 
+;; Create selectors for first birth and other births
 (def firsts (set/intersection live-ids (set (.isEqualTo (ts/column preg "birthord") 1.0))))
 (def others (set/intersection live-ids (set (.isNotEqualTo (ts/column preg "birthord") 1.0))))
 
-;; from first.py
+;; Assert length values (from first.py)
 (assert (= 4413 (count firsts)))
 (assert (= 4735 (count others)))
 
+;; Select pregnancy lengths for first and other babies
 (def pregnancy-length-first (ts/select-values preg "prglngth" firsts))
 (def pregnancy-length-other (ts/select-values preg "prglngth" others))
 
-(show (histogram [pregnancy-length-first pregnancy-length-other]
-                 {:xlabel "weeks" :ylabel "Count" :bins 50 :percents? false :y {:fmt int} :x {:domain [27 46]}}))
+(save-and-show (histogram [pregnancy-length-first pregnancy-length-other]
+                          {:xlabel "weeks" :ylabel "Count" :bins 50 :percents? false :y {:fmt int} :x {:domain [27 46]}})
+               "ch02/prglngth-fst-oth.jpg")
+;; ![ch02/prglngth-fst-oth.jpg](../../charts/ch02/prglngth-fst-oth.jpg)
 
 ;; mean of pregnancy length
 (stats/mean pregnancy-length)

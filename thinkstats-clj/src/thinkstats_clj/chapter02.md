@@ -86,8 +86,10 @@ hist
 (hist 4)
 ```
 
-
+```clojure
 => nil
+```
+
 ```clojure
 (get hist 4 0)
 ```
@@ -104,6 +106,8 @@ hist
 => (1 2 3 5)
 ```
 
+
+Show histogram with continuous scale
 ```clojure
 (save-and-show (histogram t {:bins 5 :xlabel "value" :ylabel "frequency" :percents? false})
                "ch02/histogram-cont.jpg")
@@ -111,12 +115,19 @@ hist
 ![ch02/histogram-cont.jpg](../../charts/ch02/histogram-cont.jpg)
 
 
+
+Show barchar versions
 ```clojure
-(show (histogram-discrete t {:xlabel "value" :ylabel "frequency"}))
+(save-and-show (histogram-discrete t {:xlabel "value" :ylabel "frequency"})
+               "ch02/histogram-bars.jpg")
 ```
+![ch02/histogram-bars.jpg](../../charts/ch02/histogram-bars.jpg)
+
+### Data visualizations
 
 
 
+Let's load pregnancy database and select ids which represent live birhts.
 
 
 ```clojure
@@ -124,42 +135,70 @@ hist
 (def live-ids (set (.isEqualTo (ts/column preg "outcome") 1.0)))
 ```
 
-```clojure
-(show (histogram-discrete (ts/select-values preg "birthwgt_lb" live-ids)
-                          {:xlabel "Birth weight (pounds)" :ylabel "Count"}))
-```
 
-```clojure
-(show (histogram-discrete (ts/select-values preg "birthwgt_oz" live-ids)
-                          {:xlabel "Birth weight (ounces)" :ylabel "Count"}))
-```
-
-
-from first.py
+Verify number of live births (from first.py)
 ```clojure
 (assert (= 9148 (count live-ids)))
 ```
 
 
+`ts/select-values` is function which takes given selector (list of ids) and returns corresponding data from given column. Show lbs first
+```clojure
+(save-and-show (histogram-discrete (ts/select-values preg "birthwgt_lb" live-ids)
+                                   {:xlabel "Birth weight (pounds)" :ylabel "Count"})
+               "ch02/histogram-birthwgt-lb.jpg")
+```
+![ch02/histogram-birthwgt-lb.jpg](../../charts/ch02/histogram-birthwgt-lb.jpg)
 
 
 
+and oz values
+```clojure
+(save-and-show (histogram-discrete (ts/select-values preg "birthwgt_oz" live-ids)
+                                   {:xlabel "Birth weight (ounces)" :ylabel "Count"})
+               "ch02/histogram-birthwgt-oz.jpg")
+```
+![ch02/histogram-birthwgt-oz.jpg](../../charts/ch02/histogram-birthwgt-oz.jpg)
+
+
+
+Age of respondent during pregnancy (continuous x-axis)
 
 
 ```clojure
 (def ages (ts/select-values preg "agepreg" live-ids))
-(show (histogram ages {:percents? false :bins 20 :xlabel "years" :ylabel "Count" :y {:fmt int} :x {:fmt int}}))
-(def ages-int (map #(int (m/floor %)) ages))
-(show (histogram-discrete ages-int {:xlabel "years" :ylabel "Count"}))
+(save-and-show (histogram ages {:percents? false :bins 20 :xlabel "years" :ylabel "Count" :y {:fmt int} :x {:fmt int}})
+               "ch02/histogram-agepreg.jpg")
 ```
+![ch02/histogram-agepreg.jpg](../../charts/ch02/histogram-agepreg.jpg)
 
+
+
+discrete version
+
+
+```clojure
+(def ages-int (map #(int (m/floor %)) ages))
+(save-and-show (histogram-discrete ages-int {:xlabel "years" :ylabel "Count"})
+               "ch02/histogram-agepreg-bars.jpg")
+```
+![ch02/histogram-agepreg-bars.jpg](../../charts/ch02/histogram-agepreg-bars.jpg)
+
+
+
+Select length of pregnancy
 
 
 ```clojure
 (def pregnancy-length (map #(int (m/floor %)) (ts/select-values preg "prglngth" live-ids)))
-(show (histogram-discrete pregnancy-length {:y {:fmt int} :xlabel "weeks" :ylabel "Count"}))
+(save-and-show (histogram-discrete pregnancy-length {:y {:fmt int} :xlabel "weeks" :ylabel "Count"})
+               "ch02/histogram-prglngth.jpg")
 ```
+![ch02/histogram-prglngth.jpg](../../charts/ch02/histogram-prglngth.jpg)
 
+
+
+shortest pregnancy lengths
 ```clojure
 (take 10 (sort-by first (frequencies ages-int)))
 ```
@@ -197,7 +236,7 @@ longest pregnancy lengths
 ```
 
 
-
+Create selectors for first birth and other births
 
 
 ```clojure
@@ -206,7 +245,7 @@ longest pregnancy lengths
 ```
 
 
-from first.py
+Assert length values (from first.py)
 
 
 ```clojure
@@ -215,6 +254,8 @@ from first.py
 ```
 
 
+Select pregnancy lengths for first and other babies
+
 
 ```clojure
 (def pregnancy-length-first (ts/select-values preg "prglngth" firsts))
@@ -222,9 +263,12 @@ from first.py
 ```
 
 ```clojure
-(show (histogram [pregnancy-length-first pregnancy-length-other]
-                 {:xlabel "weeks" :ylabel "Count" :bins 50 :percents? false :y {:fmt int} :x {:domain [27 46]}}))
+(save-and-show (histogram [pregnancy-length-first pregnancy-length-other]
+                          {:xlabel "weeks" :ylabel "Count" :bins 50 :percents? false :y {:fmt int} :x {:domain [27 46]}})
+               "ch02/prglngth-fst-oth.jpg")
 ```
+![ch02/prglngth-fst-oth.jpg](../../charts/ch02/prglngth-fst-oth.jpg)
+
 
 
 mean of pregnancy length
