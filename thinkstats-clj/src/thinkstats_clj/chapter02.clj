@@ -1,3 +1,23 @@
+;; # Think Stats 2e
+;;
+;; Clojure version of examples and excercises from [notebook](https://github.com/AllenDowney/ThinkStats2/blob/master/code/chap02ex.ipynb) and [book chapter](http://greenteapress.com/thinkstats2/html/thinkstats2003.html).
+;; Please read the book/notebook before. 
+;;
+;; Read [approach.md]() first for all information about assumptions and libraries used.
+;;
+;; ## Chapter 2
+;;
+;; Namespaces used:
+;;
+;; * `data.tablesaw` - simple wrapper for Tablesaw, java dataframe library
+;; * `data.stata` - stata files interpreter and loader
+;; * `nsfg` - loads and cleans NSFG datasets used here
+;; * `plot` - wrapper for `cljplot` library
+;; * `cljplot.core` - show/save chart
+;; * `fastmath.stats` - statistical functions
+;; * `fastmath.random` - distribution functions
+;; * `fastmath.core` - general math functions
+;; * `clojure.set` - to operate on row selections
 (ns thinkstats-clj.chapter02
   (:require [thinkstats-clj.data.tablesaw :as ts]
             [thinkstats-clj.data.stata :as stata]
@@ -9,14 +29,25 @@
             [fastmath.core :as m]
             [clojure.set :as set]))
 
+;; ### Histograms
 
 (def t [1 2 2 3 5])
 
-;; histograms in fastmath work on continuous range, but you can specify how many bins you need
+;; Histograms in fastmath work on continuous range.
 (stats/histogram t 5)
-;; => {:size 5, :step 0.8, :samples 5, :min 1.0, :max 5.0, :bins ([1.0 1 0.2] [1.8 2 0.4] [2.6 1 0.2] [3.4000000000000004 0 0.0] [4.2 1 0.2])}
+;; => {:size 5,
+;;     :step 0.8,
+;;     :samples 5,
+;;     :min 1.0,
+;;     :max 5.0,
+;;     :bins
+;;     ([1.0 1 0.2]
+;;      [1.8 2 0.4]
+;;      [2.6 1 0.2]
+;;      [3.4000000000000004 0 0.0]
+;;      [4.2 1 0.2])}
 
-;; for counting values use frequencies
+;; For discrete values use let's use `frequencies` function.
 (def hist (frequencies t))
 
 hist
@@ -33,7 +64,11 @@ hist
 (keys hist)
 ;; => (1 2 3 5)
 
-(show (histogram t {:bins 5 :xlabel "value" :ylabel "frequency" :percents? false}))
+
+(save-and-show (histogram t {:bins 5 :xlabel "value" :ylabel "frequency" :percents? false})
+               "ch02/histogram-cont.jpg")
+;; ![ch02/histogram-cont.jpg](../../charts/ch02/histogram-cont.jpg)
+
 (show (histogram-discrete t {:xlabel "value" :ylabel "frequency"}))
 
 ;;

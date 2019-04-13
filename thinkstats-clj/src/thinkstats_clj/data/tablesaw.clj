@@ -1,7 +1,8 @@
 (ns thinkstats-clj.data.tablesaw
   (:require [fastmath.stats :as stats]
             [fastmath.core :as m]
-            [clojure.pprint :as pp])
+            [clojure.pprint :as pp]
+            [clojure.string :as str])
   (:import [tech.tablesaw.io.csv CsvReadOptions CsvReader]
            [tech.tablesaw.columns Column]
            [tech.tablesaw.api Table Row ShortColumn StringColumn IntColumn LongColumn DoubleColumn FloatColumn NumericColumn CategoricalColumn ColumnType]
@@ -81,7 +82,7 @@
 
 (defn value-counts
   ([^Column col]
-   (frequencies (seq col)))
+   (into (sorted-map) (frequencies (seq col))))
   ([^Table t ^String colname]
    (value-counts (column t colname))))
 
@@ -242,6 +243,47 @@
   LongColumn (nan-value [_] (tech.tablesaw.columns.numbers.LongColumnType/missingValueIndicator))
   DoubleColumn (nan-value [_] (tech.tablesaw.columns.numbers.DoubleColumnType/missingValueIndicator))
   FloatColumn (nan-value [_] (tech.tablesaw.columns.numbers.FloatColumnType/missingValueIndicator)))
+
+(defprotocol EchoMDProto
+  (echo-md [data] [data config] "Generate markdown table"))
+
+(defn lr-cols [^Table table l r]
+  (let [f (partial column table)
+        cc (.columnCount table)]
+    (map seq [(map f (range l))
+              (map f (range (- cc r) cc))])))
+
+(defn join-lr
+  ([f l r sep] (join-lr (map f l) (map f r) sep))
+  ([l r sep]
+   (str 
+    (str/join "|" l)
+    (when r (str "|" sep "|" (str/join "|" r)))
+    "\n")))
+
+(defn tb-rows [^Table table l r t b]
+  (let [f (fn [lst] (map (fn [id] (join-lr #(let [v (.get % id)]
+                                            (if (= v (nan-value %)) "NaN" v)) l r "...")) lst))
+        tt (f t)
+        bb (if b (concat (join-lr (constantly "---") l r "---")  (f b)) nil)]
+    (concat tt bb)))
+
+
+(extend-protocol EchoMDProto
+  Table (echo-md
+          ([^Table table {:keys [cols rows] :or {cols 5 rows 3}}]
+           (let [cc (.columnCount table)
+                 [l r] (if (> cc (* cols 2))
+                         (lr-cols table cols cols)
+                         (lr-cols table (min cc (* cols 2)) 0))
+                 rc (.rowCount table)
+                 [t b] (if (> rc (* rows 2))
+                         [(range rows) (range (- rc rows) rc)]
+                         [(range (min rc (* 2 rows))) nil])]
+             (apply str (join-lr #(.name %) l r "...")
+                    (join-lr (constantly "---") l r "---")
+                    (tb-rows table l r t b))))
+          ([table] (echo-md table nil))))
 
 (defn fmap
   ([^Table table colname f]

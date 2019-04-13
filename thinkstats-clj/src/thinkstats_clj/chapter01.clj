@@ -1,67 +1,86 @@
+;; # Think Stats 2e
+;;
+;; Clojure version of examples and excercises from [notebook](https://github.com/AllenDowney/ThinkStats2/blob/master/code/chap01ex.ipynb) and [book chapter](http://greenteapress.com/thinkstats2/html/thinkstats2002.html).
+;; Please read the book/notebook before. 
+;;
+;; Read [approach.md]() first for all information about assumptions and libraries used.
+;;
+;; ## Chapter 1
+;;
+;; Namespaces used:
+;;
+;; * `data.tablesaw` - simple wrapper for Tablesaw, java dataframe library
+;; * `data.stata` - stata files interpreter and loader
+;; * `nsfg` - loads and cleans NSFG datasets used here
+;; * `fastmath.stats` - statistical functions
 (ns thinkstats-clj.chapter01
   (:require [thinkstats-clj.data.tablesaw :as ts]
             [thinkstats-clj.data.stata :as stata]
             [thinkstats-clj.nsfg :as nsfg]
             [fastmath.stats :as stats]))
 
-;; import dataset
+;; Let's read `2002FemPreg.dat` from Stata file to Tablesaw table.
 (def preg (nsfg/fem-preg))
 
-;; shape of dataset
+;; Check type of `preg`
+(type preg)
+;; => tech.tablesaw.api.Table
+
+;; Print shape of the dataset
 (ts/shape preg)
 ;; => {:columns 244, :rows 13593}
 
-;; select first 5 rows from 10 columns
-(println (.first (.select preg (into-array String (take 10 (.columnNames preg)))) 5))
-;; #object[tech.tablesaw.api.Table 0x2b6d4db7                                                            2002FemPreg                                                           
-;;         caseid  |  pregordr  |  howpreg_n  |  howpreg_p  |  moscurrp  |  nowprgdk  |  pregend1  |  pregend2  |  nbrnaliv  |  multbrth  |
-;;         ---------------------------------------------------------------------------------------------------------------------------------
-;;         1  |         1  |             |             |            |            |         6  |            |         1  |            |
-;;         1  |         2  |             |             |            |            |         6  |            |         1  |            |
-;;         2  |         1  |             |             |            |            |         5  |            |         3  |         5  |
-;;         2  |         2  |             |             |            |            |         6  |            |         1  |            |
-;;         2  |         3  |             |             |            |            |         6  |            |         1  |            |]
+;; Print some rows and columns from dataset
+(println (ts/echo-md preg))
+;; caseid|pregordr|howpreg_n|howpreg_p|moscurrp|...|finalwgt|secu_p|sest|cmintvw|totalwgt_lb
+;; ---|---|---|---|---|---|---|---|---|---|---
+;; 1|1|NaN|NaN|NaN|...|6448.271111704751|2|9|1231|8.8125
+;; 1|2|NaN|NaN|NaN|...|6448.271111704751|2|9|1231|7.875
+;; 2|1|NaN|NaN|NaN|...|12999.542264385902|2|12|1231|9.125
+;; ---|---|---|---|---|---|---|---|---|---|---
+;; 12571|3|NaN|NaN|NaN|...|6269.200988679606|1|78|1227|NaN
+;; 12571|4|NaN|NaN|NaN|...|6269.200988679606|1|78|1227|7.5
+;; 12571|5|NaN|NaN|NaN|...|6269.200988679606|1|78|1227|7.5
 
-;; list column names
-(.columnNames preg)
-;; => ["caseid" "pregordr" "howpreg_n" "howpreg_p" "moscurrp" "nowprgdk" "pregend1" "pregend2" "nbrnaliv" "multbrth" "cmotpreg" "prgoutcome" "cmprgend" "flgdkmo1" "cmprgbeg" "ageatend" "hpageend" "gestasun_m" "gestasun_w" "wksgest" "mosgest" "dk1gest" "dk2gest" "dk3gest" ... "finalwgt" "secu_p" "sest" "cmintvw" "totalwgt_lb"]
+;; Print first 10 column names
+(take 10 (.columnNames preg))
+;; => ("caseid" "pregordr" "howpreg_n" "howpreg_p" "moscurrp" "nowprgdk" "pregend1" "pregend2" "nbrnaliv" "multbrth")
 
-;; select column under id=1
+;; Check type of second column
 (ts/column preg 1)
 ;; => #object[tech.tablesaw.api.ShortColumn 0x4e92a539 "Short column: pregordr"]
 
-;; select column by name
+;; Let's bind `pregordr` column to a var
 (def pregordr (ts/column preg "pregordr"))
 (type pregordr)
 ;; => tech.tablesaw.api.ShortColumn
 
-;; first 10 values
-(take 10 pregordr)
-;; => (1 2 1 2 3 1 2 3 1 2)
+;; What are first 20 values? Fortunately tablesaw columns are seqable.
+(take 20 pregordr)
+;; => (1 2 1 2 3 1 2 3 1 2 1 1 2 3 1 2 3 1 2 1)
 
-;; number of values
+;; What is the length of `pregordr` column?
 (.size pregordr)
 ;; => 13593
 
-;; select first element by id
-;; tablesaw columns are collections but not sequences (they are Seqable)
+;; Select first element by id. We have to explicitly call seq in this case.
 (nth (seq pregordr) 0)
 ;; => 1
 
-;; or
+;; Or let's call Java method
 (.get pregordr 0)
 ;; => 1
 
-;; select 3 elements from id=2
+;; Select 3 elements from id=2
 (take 3 (drop 2 pregordr))
 ;; => (1 2 3)
 
-;; count frequencies from table `outcome`
-(into (sorted-map) (ts/value-counts (ts/column preg "outcome")))
+;; `ts/value-counts` is the same as `Pandas` dataframe method. Returns frequencies of values. We need to sort them.
+(ts/value-counts (ts/column preg "outcome"))
 ;; => {1 9148, 2 1862, 3 120, 4 1921, 5 190, 6 352}
 
-;; count frequencies from table `brithwgt_lb`
-(into (sorted-map) (ts/value-counts (.removeMissing (ts/column preg "birthwgt_lb"))))
+;; Count frequencies from table `brithwgt_lb` without missing values.
+(ts/value-counts (.removeMissing (ts/column preg "birthwgt_lb")))
 ;; => {0 8,
 ;;     1 40,
 ;;     2 53,
@@ -79,11 +98,23 @@
 ;;     14 3,
 ;;     15 1}
 
-;; create list of case indices
+;; `nsfg/preg-map` returns a dictionary of row ids for every pregnancy of respondent (identified by `caseid`). 
 (def preg-map (nsfg/preg-map preg))
 
+(take 10 preg-map)
+;; => (["2828" [3180 3181]]
+;;     ["281" [274 275 276]]
+;;     ["8962" [9716]]
+;;     ["3036" [3407 3408 3409]]
+;;     ["4079" [4573]]
+;;     ["11865" [12851 12852 12853 12854 12855]]
+;;     ["1803" [2065 2066]]
+;;     ["6607" [7296 7297]]
+;;     ["7096" [7748]]
+;;     ["12065" [13070]])
+
 (defn select-for-case
-  "Select values from given column for case"
+  "Select values from given column for `caseid`"
   [colname caseid]
   (let [c (ts/column preg colname)]
     (map #(.get c %) (preg-map (str caseid)))))
@@ -92,17 +123,17 @@
 (select-for-case "outcome" 10229)
 ;; => (4 4 4 4 4 4 1)
 
-;;;;;;;;; EXCERCISES
+;; ### Excercises
 
-;; birthord frequencies
-(into (sorted-map) (ts/value-counts (.removeMissing (ts/column preg "birthord"))))
+;; Order of births frequencies. Reference: [codebook](https://www.icpsr.umich.edu/nsfg6/Controller?displayPage=labelDetails&fileCode=PREG&section=A&subSec=8016&srtLabel=611933)
+(ts/value-counts (.removeMissing (ts/column preg "birthord")))
 ;; => {1 4413, 2 2874, 3 1234, 4 421, 5 126, 6 50, 7 20, 8 7, 9 2, 10 1}
 
-;; how many missing values
+;; How many missing values are there?
 (.countMissing (ts/column preg "birthord"))
 ;; => 4445
 
-;; check counts for given ranges
+;; Check counts for given pregnancy length ranges. Reference: [codebook](https://www.icpsr.umich.edu/nsfg6/Controller?displayPage=labelDetails&fileCode=PREG&section=A&subSec=8016&srtLabel=611931)
 (let [cnts (->> (ts/column preg "prglngth")
                 (group-by (fn [v]
                             (cond
@@ -114,35 +145,37 @@
   (assoc cnts "Total" (reduce + (vals cnts))))
 ;; => {"0-13" 3522, "14-26" 793, "27-50" 9278, "Total" 13593}
 
-;; mean of total weight
+;; Mean of total weight in lbs
 (stats/mean (.removeMissing (ts/column preg "totalwgt_lb")))
 ;; => 7.26562845762337
 
-;; create column with weight in kg
+;; Create column with weight in kg. `fmap` returns tablesaw column of the same type as original one by calling `(.map ...)` under the hood.
 (def totalwgt-kg (ts/fmap (.removeMissing (ts/column preg "totalwgt_lb")) #(* 0.45359237 %2)))
 
-;; mean of weight in kgs
+;; Mean of total weight in kgs
 (stats/mean totalwgt-kg)
 ;; => 3.2956336316328283
 
-;; read response data
+;; Let's read response data now
 (def resp (nsfg/fem-resp))
 
+;; Number of rows and columns
 (ts/shape resp)
 ;; => {:columns 3087, :rows 7643}
 
-;; select first 5 rows from 10 columns
-(println (.first (.select resp (into-array String (take 10 (.columnNames resp)))) 5))
-;; #object[tech.tablesaw.api.Table 0x4a71a736                                                         2002FemResp                                                         
-;;         caseid  |  rscrinf  |  rdormres  |  rostscrn  |  rscreenhisp  |  rscreenrace  |  age_a  |  age_r  |  cmbirth  |  agescrn  |
-;;         ----------------------------------------------------------------------------------------------------------------------------
-;;         2298  |        1  |         5  |         5  |            1  |            5  |     27  |     27  |      902  |       27  |
-;;         5012  |        1  |         5  |         1  |            5  |            5  |     42  |     42  |      718  |       42  |
-;;         11586  |        1  |         5  |         1  |            5  |            5  |     43  |     43  |      708  |       43  |
-;;         6794  |        5  |         5  |         4  |            1  |            5  |     15  |     15  |     1042  |       15  |
-;;         616  |        1  |         5  |         4  |            1  |            5  |     20  |     20  |      991  |       20  |]
+(println (ts/echo-md resp))
+;; caseid|rscrinf|rdormres|rostscrn|rscreenhisp|...|sest|cmintvw|cmlstyr|screentime|intvlngth
+;; ---|---|---|---|---|---|---|---|---|---|---
+;; 2298|1|5|5|1|...|18|1234|1222|18:26:36|110.49267
+;; 5012|1|5|1|5|...|18|1233|1221|16:30:59|64.294
+;; 11586|1|5|1|5|...|18|1234|1222|18:19:09|75.14917
+;; ---|---|---|---|---|---|---|---|---|---|---
+;; 5649|1|5|2|5|...|76|1228|1216|18:42:41|68.168
+;; 501|5|5|3|5|...|76|1228|1216|16:02:45|32.717335
+;; 10252|1|5|2|5|...|76|1230|1218|12:45:19|74.0615
 
-(into (sorted-map) (ts/value-counts resp "age_r"))
+;; Respondents age
+(ts/value-counts resp "age_r")
 ;; => {15 217,
 ;;     16 223,
 ;;     17 234,
@@ -178,18 +211,30 @@
 ((juxt first last) (sort (keys (ts/value-counts resp "age_r"))))
 ;; => [15 44]
 
-
-;; select row id for given case-id
+;; Select row id for given case-id from `resp` data.
 (def resp-case2298 (.rows resp (int-array (.isEqualTo (ts/column resp "caseid") "2298"))))
 
 (ts/shape resp-case2298)
 ;; => {:columns 3087, :rows 1}
 
-;; select row id for given case-id, for preg
+(println (ts/echo-md resp-case2298))
+;; caseid|rscrinf|rdormres|rostscrn|rscreenhisp|...|sest|cmintvw|cmlstyr|screentime|intvlngth
+;; ---|---|---|---|---|---|---|---|---|---|---
+;; 2298|1|5|5|1|...|18|1234|1222|18:26:36|110.49267
+
+;; select row id for given case-id from `preg` data
 (def preg-case2298 (.rows preg (int-array (.isEqualTo (ts/column preg "caseid") "2298"))))
 
 (ts/shape preg-case2298)
 ;; => {:columns 244, :rows 4}
+
+(println (ts/echo-md preg-case2298))
+;; caseid|pregordr|howpreg_n|howpreg_p|moscurrp|...|finalwgt|secu_p|sest|cmintvw|totalwgt_lb
+;; ---|---|---|---|---|---|---|---|---|---|---
+;; 2298|1|NaN|NaN|NaN|...|5556.717241429314|2|18|1234|6.875
+;; 2298|2|NaN|NaN|NaN|...|5556.717241429314|2|18|1234|5.5
+;; 2298|3|NaN|NaN|NaN|...|5556.717241429314|2|18|1234|4.1875
+;; 2298|4|NaN|NaN|NaN|...|5556.717241429314|2|18|1234|6.875
 
 ;; How old is the respondent with caseid 1?
 (let [resp-ids (.isEqualTo (ts/column resp "caseid") "1")]

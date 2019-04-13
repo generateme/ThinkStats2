@@ -5,7 +5,7 @@
 (defn- code-block
   "Create code block from given string `s`"
   [s]
-  (str "\n```clojure\n" s "\n```\n\n"))
+  (str "\n```clojure\n" s "\n```\n"))
 
 (defn save-md
   "Save markdown built from clojure source"
@@ -17,9 +17,9 @@
             (condp = type
               :code (str docstring (code-block raw))
               :comment (if (str/starts-with? raw "=>")
-                         (str "###### Result:" (code-block raw))
+                         (str (code-block raw))
                          (str raw "\n\n")))
             :append true))))
 
-#_(save-md "src/thinkstats_clj/chapter01.clj")
+(save-md "src/thinkstats_clj/chapter01.clj")
 (save-md "src/thinkstats_clj/chapter03.clj")

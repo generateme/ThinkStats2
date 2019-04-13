@@ -90,3 +90,14 @@
   ([data] (cdf data {}))
   ([data config]
    (basic-chart (b/series [:grid] [:cdf data config]) config)))
+
+
+;;;
+
+(defn save-and-show
+  "Save and show chart. Returns markdown image path"
+  [chart fname]
+  (-> chart
+      (save (str "charts/" fname))
+      (show))
+  (str "![" fname "](../../charts/" fname  ")"))
