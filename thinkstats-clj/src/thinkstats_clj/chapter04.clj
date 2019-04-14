@@ -48,6 +48,7 @@
 ;; Check the numbers
 [(count first-wgt) (count first-wgt-dropna)]
 ;; => [4413 4363]
+
 [(count other-wgt) (count other-wgt-dropna)]
 ;; => [4735 4675]
 
@@ -80,11 +81,13 @@
 
 (rnd/cdf cdf 41)
 ;; => 0.9406427634455619
+
 (rnd/cdf cdf-enumerated 41)
 ;; => 0.940642763445562
 
 (rnd/icdf cdf 0.5)
 ;; => 39.0
+
 (rnd/icdf cdf-enumerated 0.5)
 ;; => 39.0
 
@@ -105,16 +108,20 @@
 ;; Check if returned median is the same (from distribution and data). You can see that when data is not sorted, `:enumerated-real` gives wrong value
 (stats/percentile weights 50)
 ;; => 7.375
+
 (rnd/icdf live-cdf 0.5)
 ;; => 7.375
+
 (rnd/icdf live-cdf-not-sorted 0.5)
 ;; => 7.25
+
 (rnd/icdf live-cdf-empirical 0.5)
 ;; => 7.375
 
 ;; IQF
 [(stats/percentile weights 25) (stats/percentile weights 75)]
 ;; => [6.5 8.125]
+
 [(rnd/icdf live-cdf 0.25) (rnd/icdf live-cdf 0.75)]
 ;; => [6.5 8.125]
 

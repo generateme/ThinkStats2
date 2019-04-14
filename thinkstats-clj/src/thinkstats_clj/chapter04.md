@@ -73,8 +73,10 @@ Check the numbers
 [(count first-wgt) (count first-wgt-dropna)]
 ```
 
-
+```clojure
 => [4413 4363]
+```
+
 ```clojure
 [(count other-wgt) (count other-wgt-dropna)]
 ```
@@ -138,8 +140,10 @@ For CDF we can use either `:empirical` or `:enumerated-real` distributions (chec
 (rnd/cdf cdf 41)
 ```
 
-
+```clojure
 => 0.9406427634455619
+```
+
 ```clojure
 (rnd/cdf cdf-enumerated 41)
 ```
@@ -152,8 +156,10 @@ For CDF we can use either `:empirical` or `:enumerated-real` distributions (chec
 (rnd/icdf cdf 0.5)
 ```
 
-
+```clojure
 => 39.0
+```
+
 ```clojure
 (rnd/icdf cdf-enumerated 0.5)
 ```
@@ -196,20 +202,26 @@ Check if returned median is the same (from distribution and data). You can see t
 (stats/percentile weights 50)
 ```
 
-
+```clojure
 => 7.375
+```
+
 ```clojure
 (rnd/icdf live-cdf 0.5)
 ```
 
-
+```clojure
 => 7.375
+```
+
 ```clojure
 (rnd/icdf live-cdf-not-sorted 0.5)
 ```
 
-
+```clojure
 => 7.25
+```
+
 ```clojure
 (rnd/icdf live-cdf-empirical 0.5)
 ```
@@ -224,8 +236,10 @@ IQF
 [(stats/percentile weights 25) (stats/percentile weights 75)]
 ```
 
-
+```clojure
 => [6.5 8.125]
+```
+
 ```clojure
 [(rnd/icdf live-cdf 0.25) (rnd/icdf live-cdf 0.75)]
 ```
