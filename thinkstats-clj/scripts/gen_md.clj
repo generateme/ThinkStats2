@@ -23,3 +23,4 @@
 
 (save-md "src/thinkstats_clj/chapter01.clj")
 (save-md "src/thinkstats_clj/chapter02.clj")
+(save-md "src/thinkstats_clj/chapter03.clj")

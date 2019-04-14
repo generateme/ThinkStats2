@@ -15,7 +15,6 @@
 ;; * `plot` - wrapper for `cljplot` library
 ;; * `cljplot.core` - show/save chart
 ;; * `fastmath.stats` - statistical functions
-;; * `fastmath.random` - distribution functions
 ;; * `fastmath.core` - general math functions
 ;; * `clojure.set` - to operate on row selections
 (ns thinkstats-clj.chapter02
@@ -25,7 +24,6 @@
             [thinkstats-clj.plot :refer :all]
             [cljplot.core :refer :all]
             [fastmath.stats :as stats]
-            [fastmath.random :as rnd]
             [fastmath.core :as m]
             [clojure.set :as set]))
 

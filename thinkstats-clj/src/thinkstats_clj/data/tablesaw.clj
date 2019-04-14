@@ -258,7 +258,7 @@
   ([l r sep]
    (str 
     (str/join "|" l)
-    (when r (str "|" sep "|" (str/join "|" r)))
+    (when (seq r) (str "|" sep "|" (str/join "|" r)))
     "\n")))
 
 (defn tb-rows [^Table table l r t b]
