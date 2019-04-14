@@ -158,7 +158,10 @@ hist
                "ch02/prglngth-fst-oth.jpg")
 ;; ![ch02/prglngth-fst-oth.jpg](../../charts/ch02/prglngth-fst-oth.jpg)
 
-;; mean of pregnancy length
+;; #### Statistics
+
+;; Lets check various statistics for pregnancy length: mean, standar deviation, mean difference and cohens' d effect size
+
 (stats/mean pregnancy-length)
 ;; => 38.56055968517709
 
@@ -177,15 +180,19 @@ hist
 (stats/cohens-d pregnancy-length-first pregnancy-length-other)
 ;; => 0.028879044654449862
 
-;;;;;;
-;; EXCERCISES
+;; ### Excercises
 
+;; Select total weight split to first babies and other babies sets
 (def weight (ts/select-values preg "totalwgt_lb" live-ids))
 (def weight-first (ts/select-values preg "totalwgt_lb" firsts))
 (def weight-other (ts/select-values preg "totalwgt_lb" others))
 
-(show (histogram [weight-first weight-other]
-                 {:xlabel "weight (lbs)" :ylabel "Count" :bins 30 :percents? false :y {:fmt int}}))
+(save-and-show (histogram [weight-first weight-other]
+                          {:xlabel "weight (lbs)" :ylabel "Count" :bins 30 :percents? false :y {:fmt int}})
+               "ch02/weights-fst-oth.jpg")
+;; ![ch02/weights-fst-oth.jpg](../../charts/ch02/weights-fst-oth.jpg)
+
+;; Check statistics: mean and cohen's d
 
 (- (stats/mean weight-first) (stats/mean weight-other))
 ;; => -0.12476118453548768
@@ -193,32 +200,49 @@ hist
 (stats/cohens-d weight-first weight-other)
 ;; => -0.0886723633320275
 
+;; Load respondents file.
 (def resp (nsfg/fem-resp))
 
-(show (histogram-discrete (ts/column resp "totincr") {:xlabel "total income" :ylabel "Count"}))
-(show (histogram-discrete (ts/column resp "age_r") {:xlabel "respondent age" :ylabel "Count"}))
-(show (histogram-discrete (ts/column resp "numfmhh") {:xlabel "number of people in household" :ylabel "Count"}))
-(show (histogram-discrete (ts/column resp "parity") {:xlabel "number of childern born" :ylabel "Count"}))
+;; Visualize some columns
+(save-and-show (histogram-discrete (ts/column resp "totincr") {:xlabel "total income" :ylabel "Count"}) "ch02/totincr.jpg")
+;; ![ch02/totincr.jpg](../../charts/ch02/totincr.jpg)
 
+(save-and-show (histogram-discrete (ts/column resp "age_r") {:xlabel "respondent age" :ylabel "Count"}) "ch02/age_r.jpg")
+;; ![ch02/age_r.jpg](../../charts/ch02/age_r.jpg)
+
+(save-and-show (histogram-discrete (ts/column resp "numfmhh") {:xlabel "number of people in household" :ylabel "Count"}) "ch02/numfmhh.jpg")
+;; ![ch02/numfmhh.jpg](../../charts/ch02/numfmhh.jpg)
+
+(save-and-show (histogram-discrete (ts/column resp "parity") {:xlabel "number of childern born" :ylabel "Count"}) "ch02/parity.jpg")
+;; ![ch02/parity.jpg](../../charts/ch02/parity.jpg)
+
+;; 4 largest values from parity column
 (take-last 4 (sort-by first (frequencies (ts/column resp "parity"))))
 ;; => ([9 2] [10 3] [16 1] [22 1])
 
+;; Select parity for respondents with highest income and rest
 (def parities-max-income (ts/select-values resp "parity" (.isEqualTo (ts/column resp "totincr") 14.0)))
 (def parities-other-income (ts/select-values resp "parity" (.isNotEqualTo (ts/column resp "totincr") 14.0)))
 
-(show (histogram-discrete parities-max-income {:xlabel "number of childern born (income >= $75k)" :ylabel "Count"}))
-(show (histogram-discrete parities-other-income {:xlabel "number of childern born (income <= $75k)" :ylabel "Count"}))
+(save-and-show (histogram-discrete parities-max-income {:xlabel "number of childern born (income >= $75k)" :ylabel "Count"})
+               "ch02/parity-high-income.jpg")
+;; ![ch02/parity-high-income.jpg](../../charts/ch02/parity-high-income.jpg)
 
+(save-and-show (histogram-discrete parities-other-income {:xlabel "number of childern born (income <= $75k)" :ylabel "Count"})
+               "ch02/parity-low-income.jpg")
+;; ![ch02/parity-low-income.jpg](../../charts/ch02/parity-low-income.jpg)
+
+;; 4 largest values from parity for largest income
 (take-last 4 (sort-by first (frequencies parities-max-income)))
 ;; => ([4 19] [5 5] [7 1] [8 1])
+
+;; #### Statistics
 
 (- (stats/mean parities-max-income) (stats/mean parities-other-income))
 ;; => -0.17371374470099554
 
 (stats/cohens-d parities-max-income parities-other-income)
 ;; => -0.12511855314660628
-
-;;; mode
 
 (stats/mode pregnancy-length)
 ;; => 39.0
@@ -231,9 +255,7 @@ hist
 ((frequencies pregnancy-length) (int (stats/mode pregnancy-length)))
 ;; => 4693
 
-
 ;; first vs others analysis
-
 (let [mean0 (stats/mean weight)
       mean1 (stats/mean weight-first)
       mean2 (stats/mean weight-other)
@@ -248,7 +270,6 @@ hist
    :difference-oz (* 16.0 diff)
    :difference-relative-to-mean-% (* 100.0 (/ diff mean0))
    :cohens-d (stats/cohens-d weight-first weight-other)})
-
 ;; => {:cohens-d -0.0886723633320275,
 ;;     :other-babies-variance 1.943781025896453,
 ;;     :first-babies-variance 2.018027300915775,
