@@ -269,9 +269,11 @@ Select pregnancy lengths for first and other babies
 ```
 ![ch02/prglngth-fst-oth.jpg](../../charts/ch02/prglngth-fst-oth.jpg)
 
+#### Statistics
+
+Lets check various statistics for pregnancy length: mean, standar deviation, mean difference and cohens' d effect size
 
 
-mean of pregnancy length
 ```clojure
 (stats/mean pregnancy-length)
 ```
@@ -319,10 +321,11 @@ mean of pregnancy length
 ```clojure
 => 0.028879044654449862
 ```
+### Excercises
 
-EXCERCISES
 
 
+Select total weight split to first babies and other babies sets
 
 
 
@@ -334,9 +337,14 @@ EXCERCISES
 ```
 
 ```clojure
-(show (histogram [weight-first weight-other]
-                 {:xlabel "weight (lbs)" :ylabel "Count" :bins 30 :percents? false :y {:fmt int}}))
+(save-and-show (histogram [weight-first weight-other]
+                          {:xlabel "weight (lbs)" :ylabel "Count" :bins 30 :percents? false :y {:fmt int}})
+               "ch02/weights-fst-oth.jpg")
 ```
+![ch02/weights-fst-oth.jpg](../../charts/ch02/weights-fst-oth.jpg)
+
+Check statistics: mean and cohen's d
+
 
 ```clojure
 (- (stats/mean weight-first) (stats/mean weight-other))
@@ -354,23 +362,40 @@ EXCERCISES
 => -0.0886723633320275
 ```
 
+
+Load respondents file.
 ```clojure
 (def resp (nsfg/fem-resp))
 ```
 
 
-
-
-
+Visualize some columns
+```clojure
+(save-and-show (histogram-discrete (ts/column resp "totincr") {:xlabel "total income" :ylabel "Count"}) "ch02/totincr.jpg")
+```
+![ch02/totincr.jpg](../../charts/ch02/totincr.jpg)
 
 
 ```clojure
-(show (histogram-discrete (ts/column resp "totincr") {:xlabel "total income" :ylabel "Count"}))
-(show (histogram-discrete (ts/column resp "age_r") {:xlabel "respondent age" :ylabel "Count"}))
-(show (histogram-discrete (ts/column resp "numfmhh") {:xlabel "number of people in household" :ylabel "Count"}))
-(show (histogram-discrete (ts/column resp "parity") {:xlabel "number of childern born" :ylabel "Count"}))
+(save-and-show (histogram-discrete (ts/column resp "age_r") {:xlabel "respondent age" :ylabel "Count"}) "ch02/age_r.jpg")
 ```
+![ch02/age_r.jpg](../../charts/ch02/age_r.jpg)
 
+
+```clojure
+(save-and-show (histogram-discrete (ts/column resp "numfmhh") {:xlabel "number of people in household" :ylabel "Count"}) "ch02/numfmhh.jpg")
+```
+![ch02/numfmhh.jpg](../../charts/ch02/numfmhh.jpg)
+
+
+```clojure
+(save-and-show (histogram-discrete (ts/column resp "parity") {:xlabel "number of childern born" :ylabel "Count"}) "ch02/parity.jpg")
+```
+![ch02/parity.jpg](../../charts/ch02/parity.jpg)
+
+
+
+4 largest values from parity column
 ```clojure
 (take-last 4 (sort-by first (frequencies (ts/column resp "parity"))))
 ```
@@ -380,19 +405,30 @@ EXCERCISES
 ```
 
 
+Select parity for respondents with highest income and rest
+
 
 ```clojure
 (def parities-max-income (ts/select-values resp "parity" (.isEqualTo (ts/column resp "totincr") 14.0)))
 (def parities-other-income (ts/select-values resp "parity" (.isNotEqualTo (ts/column resp "totincr") 14.0)))
 ```
 
+```clojure
+(save-and-show (histogram-discrete parities-max-income {:xlabel "number of childern born (income >= $75k)" :ylabel "Count"})
+               "ch02/parity-high-income.jpg")
+```
+![ch02/parity-high-income.jpg](../../charts/ch02/parity-high-income.jpg)
 
 
 ```clojure
-(show (histogram-discrete parities-max-income {:xlabel "number of childern born (income >= $75k)" :ylabel "Count"}))
-(show (histogram-discrete parities-other-income {:xlabel "number of childern born (income <= $75k)" :ylabel "Count"}))
+(save-and-show (histogram-discrete parities-other-income {:xlabel "number of childern born (income <= $75k)" :ylabel "Count"})
+               "ch02/parity-low-income.jpg")
 ```
+![ch02/parity-low-income.jpg](../../charts/ch02/parity-low-income.jpg)
 
+
+
+4 largest values from parity for largest income
 ```clojure
 (take-last 4 (sort-by first (frequencies parities-max-income)))
 ```
@@ -400,6 +436,8 @@ EXCERCISES
 ```clojure
 => ([4 19] [5 5] [7 1] [8 1])
 ```
+#### Statistics
+
 
 ```clojure
 (- (stats/mean parities-max-income) (stats/mean parities-other-income))
@@ -416,8 +454,6 @@ EXCERCISES
 ```clojure
 => -0.12511855314660628
 ```
-mode
-
 
 ```clojure
 (stats/mode pregnancy-length)
@@ -446,9 +482,9 @@ find number of samples for mode
 ```clojure
 => 4693
 ```
+
+
 first vs others analysis
-
-
 ```clojure
 (let [mean0 (stats/mean weight)
       mean1 (stats/mean weight-first)
