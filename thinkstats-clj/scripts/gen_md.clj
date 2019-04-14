@@ -11,6 +11,7 @@
   "Save markdown built from clojure source"
   [filename]
   (let [target (str (second (re-find #"(.*)\.(\w+)$" filename)) ".md")]
+    (println "saving " target)
     (spit target "")
     (doseq [{:keys [docstring raw form type] :as all} (p/parse-file filename)]
       (spit target
@@ -21,7 +22,4 @@
                          (str raw "\n\n")))
             :append true))))
 
-(save-md "src/thinkstats_clj/chapter01.clj")
-(save-md "src/thinkstats_clj/chapter02.clj")
-(save-md "src/thinkstats_clj/chapter03.clj")
-(save-md "src/thinkstats_clj/chapter04.clj")
+(run! save-md (map #(str "src/thinkstats_clj/chapter" (format "%02d" (inc %)) ".clj") (range 4)))
