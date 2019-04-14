@@ -239,10 +239,8 @@ Compare original and biased PMFs. You can see, that PMFs are spikes, to get step
                                     {:xlabel "class size" :stroke {:size 3} :samples 500 :ylabel "PMF" :domain [6 48]})
                     "ch03/biased-unbiased.jpg")
 ```
+![ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
 
-```clojure
-=> ![ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
-```
 Create [x,y] points from PMF
 ```clojure
 (defn build-pmf-points

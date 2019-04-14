@@ -141,7 +141,7 @@
                                      :biased (partial rnd/pdf biased-pmf)}
                                     {:xlabel "class size" :stroke {:size 3} :samples 500 :ylabel "PMF" :domain [6 48]})
                     "ch03/biased-unbiased.jpg")
-;; => ![ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
+;; ![ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
 
 (defn build-pmf-points
   "Create [x,y] points from PMF"
