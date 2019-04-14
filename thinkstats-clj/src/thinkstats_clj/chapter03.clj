@@ -141,7 +141,7 @@
                                      :biased (partial rnd/pdf biased-pmf)}
                                     {:xlabel "class size" :stroke {:size 3} :samples 500 :ylabel "PMF" :domain [6 48]})
                     "ch03/biased-unbiased.jpg")
-;; => [ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
+;; => ![ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
 
 (defn build-pmf-points
   "Create [x,y] points from PMF"
@@ -153,7 +153,7 @@
                                  :biased (build-pmf-points biased-pmf (keys d) [6 48])}
                                 {:xlabel "class size" :ylabel "PMF" :stroke {:size 3} :area? true :interpolation in/step-after})
                     "ch03/biased-unbiased-step.jpg")
-;; => [ch03/biased-unbiased-step.jpg](../../charts/ch03/biased-unbiased-step.jpg)
+;; ![ch03/biased-unbiased-step.jpg](../../charts/ch03/biased-unbiased-step.jpg)
 
 ;; Draw original and unbiased PMFs to see that they are the same.
 (plot/save-and-show (plot/lines {:regular (build-pmf-points d-pmf (keys d) [6 48])

@@ -241,7 +241,7 @@ Compare original and biased PMFs. You can see, that PMFs are spikes, to get step
 ```
 
 ```clojure
-=> [ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
+=> ![ch03/biased-unbiased.jpg](../../charts/ch03/biased-unbiased.jpg)
 ```
 Create [x,y] points from PMF
 ```clojure
@@ -258,10 +258,8 @@ Draw `line` chart with interpolated (step) area chart.
                                 {:xlabel "class size" :ylabel "PMF" :stroke {:size 3} :area? true :interpolation in/step-after})
                     "ch03/biased-unbiased-step.jpg")
 ```
+![ch03/biased-unbiased-step.jpg](../../charts/ch03/biased-unbiased-step.jpg)
 
-```clojure
-=> [ch03/biased-unbiased-step.jpg](../../charts/ch03/biased-unbiased-step.jpg)
-```
 
 
 Draw original and unbiased PMFs to see that they are the same.
